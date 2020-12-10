@@ -1,13 +1,13 @@
 const jwt=require('jsonwebtoken');
-const {JWT_SECRET}=require("../keys");
+const {JWT_SECRET}=require("../config/keys");
 const mongoose=require('mongoose');
 const User=mongoose.model("User");
 
 
 module.exports=(req,res,next) =>{
-    //authorization=Bearer hjd678ebjqbj@kjf8b3
+   
     const {authorization}=req.headers;
-    // console.log(req);
+    
     if(!authorization){
         return res.status(401).json({error:"you must be logged in"});
     }

@@ -4,20 +4,12 @@ const mongoose=require('mongoose');
 const User=mongoose.model("User")
 const bcrypt=require('bcryptjs');
 var jwt = require('jsonwebtoken');
-const {JWT_SECRET}=require('../keys');
-const requireLogin=require("../middleWare/requireLogin");
+const {JWT_SECRET}=require('../config/keys');
 
-router.get('/',(req,res)=>{
-    res.send("home page");
-})
-
-router.get('/protected',requireLogin,(req,res)=>{
-    res.send("hello buddy!!");
-});
 
 router.post('/signup',(req,res)=>{
     
-    const {name,email,password}=req.body;
+    const {name,email,password,pic}=req.body;
     
     
     if(!email || !password || !name){
@@ -35,12 +27,12 @@ router.post('/signup',(req,res)=>{
             const user=new User({
                 name,
                 email,
-                password:hashpassword
+                password:hashpassword,
+                pic
             });
             
             user.save()
             .then(user =>{
-                // console.log(user);
                 res.json({message:"Saved successfully"});
             })
             .catch(err =>{
@@ -58,7 +50,6 @@ router.post('/signup',(req,res)=>{
 })
 
 router.post('/signin',(req,res)=>{
-    console.log("i am in signin get")
     const {email,password}=req.body;
     if(!email || ! password){
         return res.json({error:"Please fill the all field for sing in"});
@@ -66,18 +57,20 @@ router.post('/signin',(req,res)=>{
 
     User.findOne({email:email})
     .then(savedUser =>{
+        
         if(!savedUser){
-            res.send(422).json({message:"Invaild password or password"});
+            return res.status(422).json({error:"Invaild email"});
         }
+        
         bcrypt.compare(password,savedUser.password)
         .then(doMatch =>{
             if(doMatch){
-
                 const token=jwt.sign({_id:savedUser._id},JWT_SECRET);
-                res.json({token});
+                const {_id,name,email,followers,following,pic}=savedUser;
+                return res.json({token,user:{_id,name,email,followers,following,pic}});
                 
             }else{
-                return res.status(422).json({message:"Password in wrong"});
+                return res.status(422).json({error:"Password is wrong"});
             }
         })
         .catch(err => {
